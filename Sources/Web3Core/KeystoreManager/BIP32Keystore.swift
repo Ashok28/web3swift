@@ -40,23 +40,45 @@ public class BIP32Keystore: AbstractKeystore {
     }
 
     public func UNSAFE_getPrivateKeyData(password: String, account: EthereumAddress) throws -> Data {
-        if let key = addressStorage.path(by: account) {
-            guard let decryptedRootNode = try? self.getPrefixNodeData(password) else {throw AbstractKeystoreError.encryptionError("Failed to decrypt a keystore")}
-            guard let rootNode = HDNode(decryptedRootNode) else {throw AbstractKeystoreError.encryptionError("Failed to deserialize a root node")}
-            guard rootNode.depth == (self.rootPrefix.components(separatedBy: "/").count - 1) else {throw AbstractKeystoreError.encryptionError("Derivation depth mismatch")}
-            guard let index = UInt32(key.components(separatedBy: "/").last!) else {
-                throw AbstractKeystoreError.encryptionError("Derivation depth mismatch")
-            }
-            guard let keyNode = rootNode.derive(index: index, derivePrivateKey: true) else {
-                throw AbstractKeystoreError.encryptionError("Derivation failed")
-            }
-            guard let privateKey = keyNode.privateKey else {
-                throw AbstractKeystoreError.invalidAccountError
-            }
-            return privateKey
+        let keyNode = try getKeyNode(password: password, account: account)
+        guard let privateKey = keyNode.privateKey else {
+            throw AbstractKeystoreError.invalidAccountError
         }
-        throw AbstractKeystoreError.invalidAccountError
+        return privateKey
     }
+
+    public func getPublicKeyData(password: String, account: EthereumAddress) throws -> Data {
+        try getKeyNode(password: password, account: account).publicKey
+    }
+
+    private func getKeyNode(password: String, account: EthereumAddress) throws -> HDNode {
+        guard let key = addressStorage.path(by: account) else {
+            throw AbstractKeystoreError.invalidAccountError
+        }
+
+        guard let decryptedRootNode = try? self.getPrefixNodeData(password) else {
+            throw AbstractKeystoreError.encryptionError("Failed to decrypt a keystore")
+        }
+
+        guard let rootNode = HDNode(decryptedRootNode) else {
+            throw AbstractKeystoreError.encryptionError("Failed to deserialize a root node")
+        }
+
+        guard rootNode.depth == (self.rootPrefix.components(separatedBy: "/").count - 1) else {
+            throw AbstractKeystoreError.encryptionError("Derivation depth mismatch")
+        }
+
+        guard let index = UInt32(key.components(separatedBy: "/").last!) else {
+            throw AbstractKeystoreError.encryptionError("Derivation depth mismatch")
+        }
+
+        guard let keyNode = rootNode.derive(index: index, derivePrivateKey: true) else {
+            throw AbstractKeystoreError.encryptionError("Derivation failed")
+        }
+
+        return keyNode
+    }
+
 
     // --------------
 
