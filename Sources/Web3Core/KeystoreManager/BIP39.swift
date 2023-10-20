@@ -6,15 +6,15 @@
 import Foundation
 import CryptoSwift
 
-public enum BIP39Language {
-    case english
-    case chinese_simplified
-    case chinese_traditional
-    case japanese
-    case korean
-    case french
-    case italian
-    case spanish
+public enum BIP39Language: String, Decodable {
+    case english = "english"
+    case chinese_simplified = "chinese_simplified"
+    case chinese_traditional = "chinese_traditional"
+    case japanese = "japanese"
+    case korean = "korean"
+    case french = "french"
+    case italian = "italian"
+    case spanish = "spanish"
 
     public var words: [String] {
         switch self {
@@ -42,29 +42,6 @@ public enum BIP39Language {
             return "\u{3000}"
         default:
             return " "
-        }
-    }
-
-    init?(language: String) {
-        switch language {
-        case "english":
-            self = .english
-        case "chinese_simplified":
-            self = .chinese_simplified
-        case "chinese_traditional":
-            self = .chinese_traditional
-        case "japanese":
-            self = .japanese
-        case "korean":
-            self = .korean
-        case "french":
-            self = .french
-        case "italian":
-            self = .italian
-        case "spanish":
-            self = .spanish
-        default:
-            return nil
         }
     }
 }
